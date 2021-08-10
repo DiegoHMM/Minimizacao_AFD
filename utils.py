@@ -17,9 +17,12 @@ def mount_automata(file):
     symbols = []
     for index,row in enumerate(file):
         if(index == 0):
-            row = row.replace(" ", "")
+            print(row)
             row = row.replace("\n", "")
-            row = row.split(';')
+            row = row.split(" ")
+            row.pop(1)
+            print(row)
+            #row = row.replace(" ", "")
             for index, ele in enumerate(row):
                 if index == 0:
                     initial_state = State(ele,final=False,initial=True)
@@ -110,6 +113,15 @@ def get_states_name_from_row(row):
     return states_name
 
 
+def remove_estados_duplicados(states_list):
+    temp_list = []
+
+    for i in states_list:
+        if i not in temp_list:
+            temp_list.append(i)
+    return temp_list
+
+
 def transform_partitions_on_automata(partition, automata):
     dot = graphviz.Digraph()
     finals = []
@@ -122,16 +134,20 @@ def transform_partitions_on_automata(partition, automata):
         for state in row:
             if state.is_final():
                 finals.append(get_states_name_from_row(row))
-                others.remove(get_states_name_from_row(row))
+                if( get_states_name_from_row(row) in others):
+                    others.remove(get_states_name_from_row(row))
             if state.is_initial():
                 initials.append(get_states_name_from_row(row))
-                others.remove(get_states_name_from_row(row))
+                if( get_states_name_from_row(row) in others):
+                    others.remove(get_states_name_from_row(row))
 
 
     initials = [e for e in initials if e]
     finals = [e for e in finals if e]
     others = [e for e in others if e]
-
+    initials = remove_estados_duplicados(initials)
+    finals = remove_estados_duplicados(finals)
+    others = remove_estados_duplicados(others)
     dot.node('start',style='invis') 
 
     for states_name_initials in initials:
@@ -141,10 +157,12 @@ def transform_partitions_on_automata(partition, automata):
 
             for symbol in automata.symbols: #pega od estino do estado atual para todos os simbolos existentes
                 destiny = automata.get_destiny(state,symbol)
-                for states_name_final in finals:
-                    for state_name_final in states_name_final: #anda pelos nós finais
+                print(state_name_initial)
+                print(destiny.name)
+                for states_name_finals in finals:
+                    for state_name_final in states_name_finals: #anda pelos nós finais
                         if state_name_final == destiny.name:
-                            dot.edge(str(states_name_initials), str(state_name_final), symbol)
+                            dot.edge(str(states_name_initials), str(states_name_finals), symbol)
 
             for symbol in automata.symbols: #pega od estino do estado atual para todos os simbolos existentes
                 destiny = automata.get_destiny(state,symbol)
