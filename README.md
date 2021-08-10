@@ -1,0 +1,1 @@
+# Minimizacao_AFD
