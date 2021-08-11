@@ -122,6 +122,8 @@ def remove_estados_duplicados(states_list):
     return temp_list
 
 
+
+    
 def transform_partitions_on_automata(partition, automata):
     dot = graphviz.Digraph()
     finals = []
@@ -150,10 +152,12 @@ def transform_partitions_on_automata(partition, automata):
     others = remove_estados_duplicados(others)
     dot.node('start',style='invis') 
 
+
     for states_name_initials in initials:
         for state_name_initial in states_name_initials: #INICIALIZA OS NÓS INICIAIS GERANDO UMA EDGE INVISIVEL PARA ELA
             state = automata.get_state_by_name(state_name_initial)
             dot.edge('start',str(states_name_initials))
+            
 
             for symbol in automata.symbols: #pega od estino do estado atual para todos os simbolos existentes
                 destiny = automata.get_destiny(state,symbol)
@@ -315,5 +319,21 @@ def minimize_automata(automata):
         elif not flag_modified:
             print("FIM DA EXECUÇÃO COM N = " + str(n))
             return partition
+
+
+
+
+def remove_duplicated_edges(input_file):
+    with open(input_file, "r") as fp:
+        lines = fp.readlines()
+        new_lines = []
+        for line in lines:
+            #- Strip white spaces
+            line = line.strip()
+            if line not in new_lines:
+                new_lines.append(line)
+    output_file = "minimized.gv"
+    with open(output_file, "w") as fp:
+        fp.write("\n".join(new_lines))
             
     
