@@ -17,12 +17,9 @@ def mount_automata(file):
     symbols = []
     for index,row in enumerate(file):
         if(index == 0):
-            print(row)
             row = row.replace("\n", "")
             row = row.split(" ")
             row.pop(1)
-            print(row)
-            #row = row.replace(" ", "")
             for index, ele in enumerate(row):
                 if index == 0:
                     initial_state = State(ele,final=False,initial=True)
@@ -121,8 +118,13 @@ def remove_estados_duplicados(states_list):
             temp_list.append(i)
     return temp_list
 
-
-
+def make_edge_between_states(automata,list,dot, state,name):
+    for symbol in automata.symbols: #pega o estino do estado atual para todos os simbolos existentes
+                destiny = automata.get_destiny(state,symbol)
+                for states_name in list:
+                    for state_name in states_name: #anda pelos nós finais
+                        if state_name == destiny.name:
+                            dot.edge(str(name), str(states_name), symbol)
     
 def transform_partitions_on_automata(partition, automata):
     dot = graphviz.Digraph()
@@ -158,82 +160,28 @@ def transform_partitions_on_automata(partition, automata):
             state = automata.get_state_by_name(state_name_initial)
             dot.edge('start',str(states_name_initials))
             
-
-            for symbol in automata.symbols: #pega od estino do estado atual para todos os simbolos existentes
-                destiny = automata.get_destiny(state,symbol)
-                print(state_name_initial)
-                print(destiny.name)
-                for states_name_finals in finals:
-                    for state_name_final in states_name_finals: #anda pelos nós finais
-                        if state_name_final == destiny.name:
-                            dot.edge(str(states_name_initials), str(states_name_finals), symbol)
-
-            for symbol in automata.symbols: #pega od estino do estado atual para todos os simbolos existentes
-                destiny = automata.get_destiny(state,symbol)
-                for states_name_others in others:
-                    for state_name_other in states_name_others: #anda pelos nós finais
-                        if state_name_other == destiny.name:
-                            dot.edge(str(states_name_initials), str(states_name_others), symbol)
-            
-            for symbol in automata.symbols: #pega od estino do estado atual para todos os simbolos existentes
-                destiny = automata.get_destiny(state,symbol)
-                for states_name_initials in initials:
-                    for states_name_initial in states_name_initials: #anda pelos nós finais
-                        if states_name_initial == destiny.name:
-                            dot.edge(str(states_name_initials), str(states_name_initials), symbol)
+            make_edge_between_states(automata,finals,dot, state, states_name_initials)
+            make_edge_between_states(automata,others,dot, state, states_name_initials)
+            make_edge_between_states(automata,initials,dot, state, states_name_initials)
 
                             
     for states_name_finals in finals:
-        for state_name_final in states_name_finals: #INICIALIZA OS NÓS INICIAIS GERANDO UMA EDGE INVISIVEL PARA ELA
+        for state_name_final in states_name_finals: #INICIALIZA OS NÓS INICIAIS GERANDO UM NODE WITH DOUBLE CIRCLE
             state = automata.get_state_by_name(state_name_final)
             dot.node(str(states_name_finals),shape='doublecircle')
 
-            for symbol in automata.symbols: #pega do estino do estado atual para todos os simbolos existentes
-                destiny = automata.get_destiny(state,symbol)
-                for states_names in finals:
-                    for states_name in states_names: #anda pelos nós finais
-                        if states_name == destiny.name:
-                            dot.edge(str(states_name_finals), str(states_names), symbol)
+            make_edge_between_states(automata,finals,dot, state, states_name_finals)
+            make_edge_between_states(automata,others,dot, state, states_name_finals)
+            make_edge_between_states(automata,initials,dot, state, states_name_finals)
 
-            for symbol in automata.symbols: #pega od estino do estado atual para todos os simbolos existentes
-                destiny = automata.get_destiny(state,symbol)
-                for states_name_others in others:
-                    for state_name_other in states_name_others: #anda pelos nós finais
-                        if state_name_other == destiny.name:
-                            dot.edge(str(states_name_finals), str(states_name_others), symbol)
-            
-            for symbol in automata.symbols: #pega od estino do estado atual para todos os simbolos existentes
-                destiny = automata.get_destiny(state,symbol)
-                for states_name_initials in initials:
-                    for states_name_initial in states_name_initials: #anda pelos nós finais
-                        if states_name_initial == destiny.name:
-                            dot.edge(str(states_name_finals), str(states_name_initials), symbol)
     
     for states_name_others in others:
         for state_name_other in states_name_others: #INICIALIZA OS NÓS INICIAIS GERANDO UMA EDGE INVISIVEL PARA ELA
             state = automata.get_state_by_name(state_name_other)
 
-            for symbol in automata.symbols: #pega od estino do estado atual para todos os simbolos existentes
-                print(state)
-                destiny = automata.get_destiny(state,symbol)
-                for states_name_finals in finals:
-                    for state_name_final in states_name_finals: #anda pelos nós finais
-                        if state_name_final == destiny.name:
-                            dot.edge(str(states_name_others), str(states_name_finals), symbol)
-
-            for symbol in automata.symbols: #pega od estino do estado atual para todos os simbolos existentes
-                destiny = automata.get_destiny(state,symbol)
-                for states_names in others:
-                    for state_name in states_names: #anda pelos nós finais
-                        if state_name == destiny.name:
-                            dot.edge(str(states_name_others), str(states_names), symbol)
-            
-            for symbol in automata.symbols: #pega od estino do estado atual para todos os simbolos existentes
-                destiny = automata.get_destiny(state,symbol)
-                for states_name_initials in initials:
-                    for states_name_initial in states_name_initials: #anda pelos nós finais
-                        if states_name_initial == destiny.name:
-                            dot.edge(str(states_name_others), str(states_name_initials), symbol)
+            make_edge_between_states(automata,finals,dot, state, states_name_others)
+            make_edge_between_states(automata,others,dot, state, states_name_others)
+            make_edge_between_states(automata,initials,dot, state, states_name_others)
                     
     dot.save('minimized.gv')
             
