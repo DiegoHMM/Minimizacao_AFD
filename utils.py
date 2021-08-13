@@ -221,16 +221,19 @@ def split_new_partition(automata, equivalence_lists, partition):
     return partition
 
 
-def minimize_automata(automata):
+def minimize_automata(automata,table_file):
     print("\n Minimizando o automato \n")
     print("Iteração 0")
-    write_on_txt("Iteração 0")
+    table_file.write("Iteração 0"  + "\n")
+    table_file.write(" * Separando partições entre estados inciais e estados finais * "  + "\n")
 
     partition = initialize_partition(automata)
     n = 1
     flag_modified = True
     equivalence_lists = create_dict_states_lists(automata)
     while(flag_modified):
+
+        table_file.write("\n\n\nIteração " + str(n) + "\n")
         equivalence_lists = create_dict_states_lists(automata)
         flag_modified = False
         for index,row in enumerate(partition):
@@ -243,6 +246,7 @@ def minimize_automata(automata):
                             count_equivalence += 1
                     if(count_equivalence == len(automata.symbols)): # caso os dois estados, processando todos os simbolos do automato, tem como destino estados que estão, também, numa mesma partição
                         print(element[0].name + "," + element[1].name + " são " + str(n) + " equivalentes")
+                        table_file.write(element[0].name + "," + element[1].name + " são " + str(n) + " equivalentes \n")
                         equivalence_lists[str(element[0].name)].append([element[1]])
                     else:
                         if [element[1]] in equivalence_lists[str(element[0].name)]:
@@ -250,14 +254,14 @@ def minimize_automata(automata):
                         if [element[0]] in equivalence_lists[str(element[1].name)]:
                             equivalence_lists[str(element[1].name)].remove([element[0]])
                         print(element[0].name + "," + element[1].name + " não são " + str(n) + " equivalentes")
+                        table_file.write(element[0].name + "," + element[1].name + " não são " + str(n) + " equivalentes \n")
                         flag_modified = True     
         if flag_modified:
-            print("Iteração " + str(n))
             n  += 1
             partition = split_new_partition(automata,equivalence_lists,partition)
         elif not flag_modified:
             print("FIM DA EXECUÇÃO COM N = " + str(n))
-            write_on_txt("FIM DA EXECUÇÃO COM N = " + str(n))
+            table_file.write("\n\n\nFIM DA EXECUÇÃO COM N = " + str(n) + "\n")
             return partition
 
 

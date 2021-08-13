@@ -1,0 +1,12 @@
+Iteração 0
+ * Separando partições entre estados inciais e estados finais * 
+
+
+
+Iteração 1
+A,C são 1 equivalentes 
+C,A são 1 equivalentes 
+
+
+
+FIM DA EXECUÇÃO COM N = 1
