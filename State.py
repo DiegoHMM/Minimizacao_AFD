@@ -11,12 +11,6 @@ class State(object):
     def is_final(self):
         if(self.final == True):
             return True
-    
-    def set_initial(self,value):
-        self.initial = value
-
-    def set_final(self,value):
-        self.final = value
 
     def print_state(self):
         if(self.is_initial()):

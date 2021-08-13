@@ -1,0 +1,7 @@
+G ; H
+G 1 e
+G 0 H
+H 1 H
+H 0 H
+e 1 e
+e 0 e

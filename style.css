@@ -1,0 +1,13 @@
+#container {
+    display: flex;
+}
+
+#div-table {
+    width: 33%;
+}
+#div-source-automata{
+    width: 33%;
+}
+#div-minimized-automata{
+    width: 33%;
+}

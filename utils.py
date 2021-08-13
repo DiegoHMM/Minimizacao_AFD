@@ -1,9 +1,9 @@
-
 from Automata import Automata
 from Edge import Edge
 from State import State
 import graphviz
 import itertools
+import pydot
 
 def read_file(filename):
     f = open(filename, "r")
@@ -52,7 +52,7 @@ def mount_automata(file):
 
 
 def generate_graph_viz(automata):
-    dot = graphviz.Digraph()
+    dot = graphviz.Digraph(format='png')
     dot.node('start',style='invis') #gera um nó invisível para melhor visualização
     for state in automata.states:
         if(state.is_initial()):
@@ -62,7 +62,8 @@ def generate_graph_viz(automata):
     for edge in automata.edges:
         dot.edge(edge.origin.name, edge.destiny.name, edge.symbol)
     
-    dot.save('sample.gv') 
+    dot.render('sample.dot','./files')
+
 
 
 def initialize_partition(automata):
@@ -100,7 +101,7 @@ def is_on_same_partition(state_one,state_two,partition):
 def print_partition(partition):
     for index,row in enumerate(partition):
         for state in row:
-            print("[" + str(state.name) + "] on index " + str(index))
+            print("Estado [" + str(state.name) + "] na Partição " + str(index))
 
 
 def get_states_name_from_row(row):
@@ -118,22 +119,18 @@ def remove_estados_duplicados(states_list):
             temp_list.append(i)
     return temp_list
 
-def make_edge_between_states(automata,list,dot, state,name):
-    for symbol in automata.symbols: #pega o estino do estado atual para todos os simbolos existentes
-                destiny = automata.get_destiny(state,symbol)
-                for states_name in list:
-                    for state_name in states_name: #anda pelos nós finais
-                        if state_name == destiny.name:
-                            dot.edge(str(name), str(states_name), symbol)
+def make_edge_between_states(automata,list,dot, state,name): #VALIDA QUAIS OS ESTADOS DE DESTINO DE CADA ESTADO PRESENTE NO CONJUNTO DE ESTADOS ATUAIS
+    for symbol in automata.symbols:
+        destiny = automata.get_destiny(state,symbol)
+        for states_name in list:
+            for state_name in states_name:
+                if state_name == destiny.name:
+                    dot.edge(str(name), str(states_name), symbol)
     
-def transform_partitions_on_automata(partition, automata):
-    dot = graphviz.Digraph()
-    finals = []
-    initials = []
-    others = []
 
+
+def split_states_between_type(partition,initials = [],others =[] ,finals = []):
     for index,row in enumerate(partition):
-        
         others.append(get_states_name_from_row(row))
         for state in row:
             if state.is_final():
@@ -145,48 +142,42 @@ def transform_partitions_on_automata(partition, automata):
                 if( get_states_name_from_row(row) in others):
                     others.remove(get_states_name_from_row(row))
 
-
     initials = [e for e in initials if e]
     finals = [e for e in finals if e]
     others = [e for e in others if e]
     initials = remove_estados_duplicados(initials)
     finals = remove_estados_duplicados(finals)
     others = remove_estados_duplicados(others)
+
+    return initials,others,finals
+
+def transform_partitions_on_automata(partition, automata):
+    initials, others, finals = split_states_between_type(partition=partition) # aqui recebo meus estados da partição final ja divididos entre iniciais/finais/outros
+    
+    dot = graphviz.Digraph()
     dot.node('start',style='invis') 
-
-
     for states_name_initials in initials:
         for state_name_initial in states_name_initials: #INICIALIZA OS NÓS INICIAIS GERANDO UMA EDGE INVISIVEL PARA ELA
             state = automata.get_state_by_name(state_name_initial)
             dot.edge('start',str(states_name_initials))
-            
             make_edge_between_states(automata,finals,dot, state, states_name_initials)
             make_edge_between_states(automata,others,dot, state, states_name_initials)
-            make_edge_between_states(automata,initials,dot, state, states_name_initials)
-
-                            
+            make_edge_between_states(automata,initials,dot, state, states_name_initials)           
     for states_name_finals in finals:
         for state_name_final in states_name_finals: #INICIALIZA OS NÓS INICIAIS GERANDO UM NODE WITH DOUBLE CIRCLE
             state = automata.get_state_by_name(state_name_final)
             dot.node(str(states_name_finals),shape='doublecircle')
-
-            make_edge_between_states(automata,finals,dot, state, states_name_finals)
+            make_edge_between_states(automata,finals,dot, state, states_name_finals) 
             make_edge_between_states(automata,others,dot, state, states_name_finals)
-            make_edge_between_states(automata,initials,dot, state, states_name_finals)
-
-    
+            make_edge_between_states(automata,initials,dot, state, states_name_finals)  
     for states_name_others in others:
-        for state_name_other in states_name_others: #INICIALIZA OS NÓS INICIAIS GERANDO UMA EDGE INVISIVEL PARA ELA
+        for state_name_other in states_name_others:
             state = automata.get_state_by_name(state_name_other)
-
             make_edge_between_states(automata,finals,dot, state, states_name_others)
             make_edge_between_states(automata,others,dot, state, states_name_others)
             make_edge_between_states(automata,initials,dot, state, states_name_others)
-                    
-    dot.save('minimized.gv')
+    dot.save('minimized.dot', "./files")
             
-
-
 
 def create_dict_states_lists(automata):
     dict = {}
@@ -204,7 +195,6 @@ def split_new_partition(automata, equivalence_lists, partition):
                     for equivalence in equivalence_lists[str(state.name)]:
                             if(equivalence in partition[index]): #verifica se as equivalências estão dentro da partition e a cada equivalencia que esteja eu somo 1, se no fim o contador ficar do mesmo tamanho de len(partition[index])-1 então não faço mudanças na partition
                                 count_equivalences += 1
-
                     if count_equivalences <= len(partition[index])-1: #caso a partition não precise ser alterada (todas as equivalencias estão corretas)
                         pass
                     else:
@@ -212,7 +202,6 @@ def split_new_partition(automata, equivalence_lists, partition):
                             if(len(row) == 0):
                                 partition[index].remove(state) #retira o estado da partição
                                 row.append(state) #adiciona o estado na nova partição
-                                
                                 for equivalence in equivalence_lists[str(state.name)]:
                                     partition[index].remove(equivalence)
                                     partition[index]
@@ -234,12 +223,13 @@ def split_new_partition(automata, equivalence_lists, partition):
 
 def minimize_automata(automata):
     print("\n Minimizando o automato \n")
-    
+    print("Iteração 0")
+    write_on_txt("Iteração 0")
+
     partition = initialize_partition(automata)
     n = 1
     flag_modified = True
     equivalence_lists = create_dict_states_lists(automata)
-
     while(flag_modified):
         equivalence_lists = create_dict_states_lists(automata)
         flag_modified = False
@@ -262,26 +252,33 @@ def minimize_automata(automata):
                         print(element[0].name + "," + element[1].name + " não são " + str(n) + " equivalentes")
                         flag_modified = True     
         if flag_modified:
+            print("Iteração " + str(n))
             n  += 1
             partition = split_new_partition(automata,equivalence_lists,partition)
         elif not flag_modified:
             print("FIM DA EXECUÇÃO COM N = " + str(n))
+            write_on_txt("FIM DA EXECUÇÃO COM N = " + str(n))
             return partition
 
 
 
+def write_on_txt(text, filename="table.txt"):
+    with open(filename, 'a',encoding='utf-8') as f:
+        f.write(text)
+        f.write("\n")
 
-def remove_duplicated_edges(input_file):
-    with open(input_file, "r") as fp:
+
+def remove_duplicated_edges(outpufile):
+    with open("./files/" + outpufile, "r") as fp:
         lines = fp.readlines()
         new_lines = []
         for line in lines:
-            #- Strip white spaces
             line = line.strip()
             if line not in new_lines:
                 new_lines.append(line)
-    output_file = "minimized.gv"
-    with open(output_file, "w") as fp:
+    with open("./files/" + outpufile, "w") as fp:
         fp.write("\n".join(new_lines))
+
+    (graph,) = pydot.graph_from_dot_file('./files/minimized.dot')
+    graph.write_png('./files/minimized.png',)
             
-    
